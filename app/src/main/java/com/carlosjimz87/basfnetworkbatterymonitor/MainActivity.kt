@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.carlosjimz87.basfnetworkbatterymonitor.data.battery.BatteryMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.data.connectivity.NetworkMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.theme.BASFNetworkBatteryMonitorTheme
 import kotlinx.coroutines.MainScope
@@ -19,16 +20,24 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-    private val monitor: NetworkMonitor by inject()
+    private val networkMonitor: NetworkMonitor by inject()
+    private val batteryMonitor: BatteryMonitor by inject()
     private val scope = MainScope()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        monitor.networkStatusFlow
+        networkMonitor.networkStatusFlow
             .onEach { status ->
                 println("🔥 NETWORK STATUS: $status")
+            }
+            .launchIn(scope)
+
+
+        batteryMonitor.batteryStatusFlow
+            .onEach { status ->
+                println("🔋 Battery: $status")
             }
             .launchIn(scope)
 
