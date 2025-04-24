@@ -14,12 +14,6 @@ class StatusRepositoryImpl(
     private val batteryMonitor: BatteryMonitor
 ) : StatusRepository {
 
-//    override fun getStatus(): Flow<MonitoringStatus> = combine(
-//        networkMonitor.networkStatusFlow,
-//        batteryMonitor.batteryStatusFlow
-//    ) { network, battery ->
-//        MonitoringStatus(network = network, battery = battery)
-//    }
     override fun getStatus(): Flow<MonitoringState> = combine(
         networkMonitor.networkStatusFlow
             .onStart { emit(NetworkStatus()) },

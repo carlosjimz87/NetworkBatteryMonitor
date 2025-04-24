@@ -18,3 +18,5 @@ class FakeStatusRepository(
         MonitoringState(network = network, battery = battery)
     }
 }
+
+// TODO: In a production environment these fakes would be injected with a Koin testModule
