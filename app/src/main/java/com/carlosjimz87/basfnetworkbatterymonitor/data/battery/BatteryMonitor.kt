@@ -13,14 +13,32 @@ import kotlinx.coroutines.flow.callbackFlow
 class BatteryMonitor(private val context: Context) {
 
     val batteryStatusFlow: Flow<BatteryStatus> = callbackFlow {
+
+        val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+
+        val stickyIntent = context.registerReceiver(null, intentFilter)
+        stickyIntent?.let { intent ->
+            val level = intent.getIntExtra("level", -1)
+            val isLow = level in 0..19
+            trySend(BatteryStatus(level, isLow))
+        }
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
                 val level = intent?.getIntExtra("level", -1) ?: -1
                 val isLow = level in 0..19
-                trySend(BatteryStatus(level = level, isLow = isLow))
+                trySend(BatteryStatus(level, isLow))
             }
         }
 
+        registerReceiver(receiver)
+
+        awaitClose {
+            context.unregisterReceiver(receiver)
+        }
+    }
+
+    private fun registerReceiver(receiver: BroadcastReceiver) {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         ContextCompat.registerReceiver(
             context,
@@ -28,9 +46,5 @@ class BatteryMonitor(private val context: Context) {
             filter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
-
-        awaitClose {
-            context.unregisterReceiver(receiver)
-        }
     }
 }
