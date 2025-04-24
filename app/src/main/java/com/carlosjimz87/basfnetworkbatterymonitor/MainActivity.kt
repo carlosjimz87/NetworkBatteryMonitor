@@ -1,4 +1,4 @@
-package com.carlosjimz87.basfnetworkbatterymonitor.ui.main
+package com.carlosjimz87.basfnetworkbatterymonitor
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.carlosjimz87.basfnetworkbatterymonitor.ui.main.MainViewModel
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.theme.BASFNetworkBatteryMonitorTheme
 import org.koin.androidx.compose.koinViewModel
 
