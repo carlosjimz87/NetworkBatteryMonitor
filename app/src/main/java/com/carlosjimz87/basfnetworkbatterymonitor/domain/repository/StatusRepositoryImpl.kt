@@ -3,7 +3,7 @@ package com.carlosjimz87.basfnetworkbatterymonitor.domain.repository
 import com.carlosjimz87.basfnetworkbatterymonitor.data.battery.BatteryMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.data.connectivity.NetworkMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.BatteryStatus
-import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringStatus
+import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -20,7 +20,7 @@ class StatusRepositoryImpl(
 //    ) { network, battery ->
 //        MonitoringStatus(network = network, battery = battery)
 //    }
-    override fun getStatus(): Flow<MonitoringStatus> = combine(
+    override fun getStatus(): Flow<MonitoringState> = combine(
         networkMonitor.networkStatusFlow
             .onStart { emit(NetworkStatus()) },
 
@@ -28,7 +28,7 @@ class StatusRepositoryImpl(
             .onStart { emit(BatteryStatus()) }
 
     ) { network, battery ->
-        MonitoringStatus(network = network, battery = battery)
+        MonitoringState(network = network, battery = battery)
     }
 
 }
