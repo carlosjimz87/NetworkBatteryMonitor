@@ -16,9 +16,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
+import com.carlosjimz87.basfnetworkbatterymonitor.ui.events.UiEvent
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.main.MainScreen
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.main.MainViewModel
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.theme.BASFNetworkBatteryMonitorTheme
+import com.carlosjimz87.basfnetworkbatterymonitor.utils.NotificationHelper
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val previousStatus = remember { mutableStateOf(status) }
 
+                // handling state flows
                 LaunchedEffect(status?.network) {
                     val previous = previousStatus.value?.network
                     val current = status?.network
@@ -42,6 +46,17 @@ class MainActivity : ComponentActivity() {
                     shouldShowSnackMessage(previous, current, snackbarHostState)
 
                     previousStatus.value = status
+                }
+
+                // collecting shared flows
+                LaunchedEffect(Unit) {
+                    viewModel.events.collectLatest { event ->
+                        when (event) {
+                            UiEvent.ShowLowBatteryNotification -> {
+                                NotificationHelper.showBatteryLowNotification(this@MainActivity)
+                            }
+                        }
+                    }
                 }
 
                 Scaffold(
