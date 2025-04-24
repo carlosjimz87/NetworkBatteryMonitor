@@ -1,6 +1,8 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.common
 
+import androidx.compose.material3.SnackbarHostState
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
+import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkType
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,4 +25,19 @@ fun MonitoringState.internetAvailability(): String {
 fun currentTime(): String {
     val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     return format.format(Date())
+}
+
+/**
+ * Display network loss message if the connection changes and is now disconnected
+ */
+suspend fun showSnackbarMessage(
+    previous: NetworkStatus?,
+    current: NetworkStatus?,
+    snackbarHostState: SnackbarHostState
+) {
+    if (previous != null && current != null && current != previous) {
+        if (!current.connected) { // only showing lost connection for better UX
+            snackbarHostState.showSnackbar("❌ Lost network connection")
+        }
+    }
 }

@@ -41,12 +41,15 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
             }
         }
 
+        // Build a request that listens only for networks with internet capability
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
 
+        // Register the network callback to start receiving updates
         connectivityManager.registerNetworkCallback(request, callback)
 
+        // Emit initial status immediately if it's different from the last emitted one
         getNetworkDetails()
             .takeIf { it != lastStatus }
             ?.let {
@@ -54,11 +57,13 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
                 lastStatus = it
             }
 
+        // Clean up callback when the flow is closed
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
         }
     }
 
+    // Helper to update the flow only when the network status changes
     private fun ProducerScope<NetworkStatus>.updateStatus() {
         getNetworkDetails()
             .takeIf { it != lastStatus }
@@ -69,6 +74,7 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
     }
 
 
+    // Retrieves the current network details (type, connectivity, internet access)
     private fun getNetworkDetails(): NetworkStatus {
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)

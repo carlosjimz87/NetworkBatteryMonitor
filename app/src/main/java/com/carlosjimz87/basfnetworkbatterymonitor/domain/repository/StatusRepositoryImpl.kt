@@ -15,14 +15,16 @@ class StatusRepositoryImpl(
 ) : StatusRepository {
 
     override fun getStatus(): Flow<MonitoringState> = combine(
+        // Emit a default NetworkStatus immediately before first real emission
         networkMonitor.networkStatusFlow
             .onStart { emit(NetworkStatus()) },
 
+        // Emit a default BatteryStatus immediately before first real emission
         batteryMonitor.batteryStatusFlow
             .onStart { emit(BatteryStatus()) }
 
     ) { network, battery ->
+        // Combine both flows into a unified MonitoringState
         MonitoringState(network = network, battery = battery)
     }
-
 }

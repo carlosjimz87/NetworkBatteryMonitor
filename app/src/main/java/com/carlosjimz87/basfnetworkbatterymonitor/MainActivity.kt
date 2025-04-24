@@ -15,7 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
+import com.carlosjimz87.basfnetworkbatterymonitor.common.showSnackbarMessage
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.events.UiEvent
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.main.MainScreen
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.main.MainViewModel
@@ -38,17 +38,17 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val previousStatus = remember { mutableStateOf(status) }
 
-                // handling state flows
+                // Show snackbar when network status changes (disconnect only for better UX)
                 LaunchedEffect(status?.network) {
                     val previous = previousStatus.value?.network
                     val current = status?.network
 
-                    shouldShowSnackMessage(previous, current, snackbarHostState)
+                    showSnackbarMessage(previous, current, snackbarHostState)
 
                     previousStatus.value = status
                 }
 
-                // collecting shared flows
+                // Collect UI events (like low battery warning) from the ViewModel
                 LaunchedEffect(Unit) {
                     viewModel.events.collectLatest { event ->
                         when (event) {
@@ -70,18 +70,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-            }
-        }
-    }
-
-    private suspend fun shouldShowSnackMessage(
-        previous: NetworkStatus?,
-        current: NetworkStatus?,
-        snackbarHostState: SnackbarHostState
-    ) {
-        if (previous != null && current != null && current != previous) {
-            if (!current.connected) { // only showing lost connection for better UX
-                snackbarHostState.showSnackbar("❌ Lost network connection")
             }
         }
     }

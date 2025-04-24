@@ -19,16 +19,20 @@ class MainViewModel(
     private val repository: StatusRepository
 ) : ViewModel() {
 
+    // Holds the combined state (network, battery)
     private val _uiState = MutableStateFlow<MonitoringState?>(null)
     val uiState: StateFlow<MonitoringState?> = _uiState.asStateFlow()
 
+    // Emits one-time UI events (notifications in this case)
     private val _events = MutableSharedFlow<UiEvent>()
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 
+    // Flag to avoid triggering duplicate low battery notifications
     private var lowBatteryNotified = false
 
     init {
         viewModelScope.launch {
+            // Collect combined status and update state + fire events
             repository.getStatus().collectLatest { status ->
                 _uiState.value = status
                 shouldShowBatteryNotification(status)
@@ -36,8 +40,8 @@ class MainViewModel(
         }
     }
 
+    // Emits an event if the battery is low and no notification has been sent yet
     private suspend fun shouldShowBatteryNotification(status: MonitoringState) {
-
         if (status.battery.isLow && !lowBatteryNotified) {
             _events.emit(UiEvent.ShowLowBatteryNotification)
             lowBatteryNotified = true

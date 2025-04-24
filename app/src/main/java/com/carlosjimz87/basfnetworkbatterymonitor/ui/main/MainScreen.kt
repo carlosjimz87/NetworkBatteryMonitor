@@ -30,16 +30,19 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     state: MonitoringState
 ) {
+    // Animate network color state
     val networkColor by animateColorAsState(
         targetValue = if (state.network.connected) Color(0xFF2E7D32) else Color(0xFFC62828),
         label = "NetworkColor"
     )
 
+    // Animate battery color transition for low battery state
     val batteryColor by animateColorAsState(
         targetValue = if (state.battery.isLow) Color(0xFFFFA000) else Color(0xFF1976D2),
         label = "BatteryColor"
     )
 
+    // Track last refresh time whenever state changes
     val time = remember { mutableStateOf(currentTime()) }
     LaunchedEffect(state) {
         time.value = currentTime()
@@ -75,6 +78,7 @@ fun MainScreen(
                 fontWeight = FontWeight.Bold
             )
 
+            // Show warning only if battery is low
             AnimatedVisibility(visible = state.battery.isLow) {
                 Text(
                     "⚠️ Battery is low!",

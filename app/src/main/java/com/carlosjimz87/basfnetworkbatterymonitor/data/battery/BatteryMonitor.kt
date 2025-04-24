@@ -17,6 +17,7 @@ open class BatteryMonitor(private val context: Context) {
 
         val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
+        // Retrieve and emit the latest battery status immediately (sticky broadcast returns last known Intent)
         val stickyIntent = context.registerReceiver(null, intentFilter)
         stickyIntent?.let { intent ->
             val level = intent.getIntExtra("level", -1)
@@ -26,20 +27,22 @@ open class BatteryMonitor(private val context: Context) {
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
+                // Emit battery status on every system update
                 val level = intent?.getIntExtra("level", -1) ?: -1
                 val isLow = level in 0..MIN_BATTERY_WARNING_VALUE
                 trySend(BatteryStatus(level, isLow))
             }
         }
 
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        // Register receiver for battery status changes
         ContextCompat.registerReceiver(
             context,
             receiver,
-            filter,
+            intentFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
+        // Cleanup when flow is closed
         awaitClose {
             context.unregisterReceiver(receiver)
         }
