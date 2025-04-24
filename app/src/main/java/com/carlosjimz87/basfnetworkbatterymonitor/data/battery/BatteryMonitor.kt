@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
+import com.carlosjimz87.basfnetworkbatterymonitor.common.Constants.MIN_BATTERY_WARNING_VALUE
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.BatteryStatus
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -19,26 +20,18 @@ class BatteryMonitor(private val context: Context) {
         val stickyIntent = context.registerReceiver(null, intentFilter)
         stickyIntent?.let { intent ->
             val level = intent.getIntExtra("level", -1)
-            val isLow = level in 0..19
+            val isLow = level in 0..MIN_BATTERY_WARNING_VALUE
             trySend(BatteryStatus(level, isLow))
         }
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
                 val level = intent?.getIntExtra("level", -1) ?: -1
-                val isLow = level in 0..19
+                val isLow = level in 0..MIN_BATTERY_WARNING_VALUE
                 trySend(BatteryStatus(level, isLow))
             }
         }
 
-        registerReceiver(receiver)
-
-        awaitClose {
-            context.unregisterReceiver(receiver)
-        }
-    }
-
-    private fun registerReceiver(receiver: BroadcastReceiver) {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         ContextCompat.registerReceiver(
             context,
@@ -46,5 +39,9 @@ class BatteryMonitor(private val context: Context) {
             filter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
+
+        awaitClose {
+            context.unregisterReceiver(receiver)
+        }
     }
 }
