@@ -1,6 +1,8 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.ui.main
 
+import androidx.lifecycle.SavedStateHandle
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.BatteryStatus
+import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkType
 import com.carlosjimz87.basfnetworkbatterymonitor.data.repository.FakeStatusRepository
@@ -21,6 +23,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
+
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -34,16 +37,25 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `initial state is null`() = runTest {
-        val repo = FakeStatusRepository(
-            MutableStateFlow(NetworkStatus(NetworkType.WIFI, true, true)),
-            MutableStateFlow(BatteryStatus(50, false))
+    fun `restores state from SavedStateHandle on init`() = runTest {
+        val initialState = MonitoringState(
+            network = NetworkStatus(NetworkType.ETHERNET, true, true),
+            battery = BatteryStatus(33, false)
         )
 
-        val vm = MainViewModel(repo)
-        assertNull(vm.uiState.value)
-    }
+        val savedStateHandle = SavedStateHandle(
+            mapOf("saved_monitoring_state" to initialState)
+        )
 
+        val repo = FakeStatusRepository(
+            MutableStateFlow(NetworkStatus(NetworkType.WIFI, true, true)),
+            MutableStateFlow(BatteryStatus(80, false))
+        )
+
+        val vm = MainViewModel(repo, savedStateHandle)
+        assertEquals(33, vm.uiState.value?.battery?.level)
+        assertEquals(NetworkType.ETHERNET, vm.uiState.value?.network?.type)
+    }
 
     @Test
     fun `does not emit low battery event if level is 25`() = runTest {
@@ -52,7 +64,7 @@ class MainViewModelTest {
             MutableStateFlow(BatteryStatus(25, false))
         )
 
-        val vm = MainViewModel(repo)
+        val vm = MainViewModel(repo, SavedStateHandle())
 
         val events = mutableListOf<UiEvent>()
         val job = launch { vm.events.collect { events += it } }
@@ -62,22 +74,17 @@ class MainViewModelTest {
         job.cancel()
     }
 
-
     @Test
     fun `emits low battery event only once even with multiple low values`() = runTest {
         val batteryFlow = MutableStateFlow(BatteryStatus(15, true))
         val networkFlow = MutableStateFlow(NetworkStatus(NetworkType.WIFI, true, true))
 
         val repo = FakeStatusRepository(networkFlow, batteryFlow)
-        val vm = MainViewModel(repo)
+        val vm = MainViewModel(repo, SavedStateHandle())
 
         val events = mutableListOf<UiEvent>()
         val job = launch { vm.events.collect { events += it } }
 
-        // First event (should trigger)
-        advanceUntilIdle()
-
-        // Still low → shouldn't trigger again
         batteryFlow.value = BatteryStatus(10, true)
         advanceUntilIdle()
 
@@ -92,7 +99,7 @@ class MainViewModelTest {
             MutableStateFlow(BatteryStatus(50, false))
         )
 
-        val vm = MainViewModel(repo)
+        val vm = MainViewModel(repo, SavedStateHandle())
         advanceUntilIdle()
 
         val state = vm.uiState.value
@@ -103,27 +110,21 @@ class MainViewModelTest {
 
     @Test
     fun `emits low battery event only once`() = runTest {
-        val networkFlow =
-            MutableStateFlow(NetworkStatus(type = NetworkType.WIFI, connected = true, hasInternet = true))
+        val networkFlow = MutableStateFlow(NetworkStatus(NetworkType.WIFI, true, true))
         val batteryFlow = MutableStateFlow(BatteryStatus(level = 15, isLow = true))
 
-        val fakeRepo = FakeStatusRepository(networkFlow, batteryFlow)
-        val viewModel = MainViewModel(fakeRepo)
+        val repo = FakeStatusRepository(networkFlow, batteryFlow)
+        val viewModel = MainViewModel(repo, SavedStateHandle())
 
         val events = mutableListOf<UiEvent>()
-        val job = launch {
-            viewModel.events.collect { events += it }
-        }
+        val job = launch { viewModel.events.collect { events += it } }
 
-        // Simulate another low update, should not duplicate event
         batteryFlow.value = BatteryStatus(level = 10, isLow = true)
-
         advanceUntilIdle()
-        job.cancel()
 
+        job.cancel()
         assertEquals(1, events.count { it is UiEvent.ShowLowBatteryNotification })
     }
-
 
     @Test
     fun `network changes do not emit low battery event`() = runTest {
@@ -131,12 +132,11 @@ class MainViewModelTest {
         val networkFlow = MutableStateFlow(NetworkStatus(NetworkType.WIFI, true, true))
 
         val repo = FakeStatusRepository(networkFlow, batteryFlow)
-        val vm = MainViewModel(repo)
+        val vm = MainViewModel(repo, SavedStateHandle())
 
         val events = mutableListOf<UiEvent>()
         val job = launch { vm.events.collect { events += it } }
 
-        // Trigger network changes
         networkFlow.value = NetworkStatus(NetworkType.CELLULAR, false, false)
         networkFlow.value = NetworkStatus(NetworkType.WIFI, true, true)
 
@@ -145,5 +145,4 @@ class MainViewModelTest {
 
         assertTrue(events.isEmpty())
     }
-
 }
