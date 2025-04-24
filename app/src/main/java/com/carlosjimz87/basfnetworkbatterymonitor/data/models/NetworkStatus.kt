@@ -1,6 +1,7 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.data.models
 
-enum class NetworkStatus {
-    Connected,
-    Disconnected
-}
+data class NetworkStatus(
+    val type: String,
+    val connected: Boolean,
+    val hasInternet: Boolean
+)

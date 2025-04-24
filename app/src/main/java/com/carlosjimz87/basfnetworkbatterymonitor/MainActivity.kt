@@ -11,20 +11,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.carlosjimz87.basfnetworkbatterymonitor.data.connectivity.NetworkMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.ui.theme.BASFNetworkBatteryMonitorTheme
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
+    private val monitor: NetworkMonitor by inject()
+    private val scope = MainScope()
 
-    val string: String by inject()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        monitor.networkStatusFlow
+            .onEach { status ->
+                println("🔥 NETWORK STATUS: $status")
+            }
+            .launchIn(scope)
+
+
         setContent {
             BASFNetworkBatteryMonitorTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = string,
+                        name = "Hola",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
