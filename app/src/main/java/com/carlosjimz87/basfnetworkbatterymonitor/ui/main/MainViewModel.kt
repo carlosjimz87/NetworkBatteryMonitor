@@ -1,5 +1,6 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.ui.main
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
@@ -16,11 +17,17 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val repository: StatusRepository
+    private val repository: StatusRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+    companion object {
+        private const val SAVED_MONITORING_STATE = "saved_monitoring_state"
+    }
 
     // Holds the combined state (network, battery)
-    private val _uiState = MutableStateFlow<MonitoringState?>(null)
+    private val _uiState = MutableStateFlow<MonitoringState?>(
+        savedStateHandle.get<MonitoringState>(SAVED_MONITORING_STATE)
+    )
     val uiState: StateFlow<MonitoringState?> = _uiState.asStateFlow()
 
     // Emits one-time UI events (notifications in this case)
@@ -35,6 +42,7 @@ class MainViewModel(
             // Collect combined status and update state + fire events
             repository.getStatus().collectLatest { status ->
                 _uiState.value = status
+                savedStateHandle[SAVED_MONITORING_STATE] = status
                 shouldShowBatteryNotification(status)
             }
         }

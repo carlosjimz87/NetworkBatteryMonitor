@@ -1,6 +1,7 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.di
 import android.content.Context
 import android.net.ConnectivityManager
+import androidx.lifecycle.SavedStateHandle
 import com.carlosjimz87.basfnetworkbatterymonitor.data.battery.BatteryMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.data.connectivity.NetworkMonitor
 import com.carlosjimz87.basfnetworkbatterymonitor.domain.repository.StatusRepository
@@ -23,6 +24,8 @@ val appModules = module {
     single<StatusRepository> { StatusRepositoryImpl(get(), get()) }
 
     // ViewModels
-    viewModel { MainViewModel(get()) }
+    viewModel { (handle: SavedStateHandle) ->
+        MainViewModel(repository = get(), savedStateHandle = handle)
+    }
 
 }
