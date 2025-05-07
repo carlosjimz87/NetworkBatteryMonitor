@@ -11,9 +11,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-open class BatteryMonitor(private val context: Context) {
+ class BatteryMonitor(private val context: Context) {
 
-    open val batteryStatusFlow: Flow<BatteryStatus> = callbackFlow {
+     val batteryStatusFlow: Flow<BatteryStatus> = callbackFlow {
 
         val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
