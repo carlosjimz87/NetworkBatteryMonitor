@@ -77,6 +77,38 @@ To execute all unit tests:
 
 ---
 
+## 🧪 Manual Testing via ADB
+
+To simulate different battery and network scenarios without needing physical changes, you can use the following ADB commands:
+
+### 🔋 Battery Simulation
+
+Set battery level:
+```
+adb shell dumpsys battery set level [percentage value]
+```
+
+Reset to real battery values:
+```
+adb shell dumpsys battery reset
+```
+
+### 📶 Network Simulation
+
+Disable/Enable Wi-Fi:
+```
+adb shell svc wifi disable
+adb shell svc wifi enable
+```
+
+Disable/Enable Mobile Data:
+```
+adb shell svc data disable
+adb shell svc data enable
+```
+
+---
+
 ## ✨ Contributions
 
 This app was developed as an educational project and welcomes contributions! Feel free to fork the repository, submit pull requests, or report issues via the GitHub issue tracker.
