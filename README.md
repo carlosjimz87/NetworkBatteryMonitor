@@ -1,4 +1,4 @@
-# 🔋📶 Network & Battery Monitor – Android App
+# 🔋📶 Network & Battery Monitor App 🤖📱
 
 **Network & Battery Monitor** is an Android application that provides real-time tracking of **network connectivity** and **battery status**. With a modern, responsive UI built using **Jetpack Compose**, the app leverages **Kotlin Coroutines**, **StateFlow**, and **Koin** to deliver a clean, maintainable, and testable architecture. Users receive instant updates and notifications about network changes and low battery levels.
 
@@ -28,7 +28,38 @@
 
 ## 📦 Project Structure
 
-*(Consider adding a brief overview here, e.g., key directories like `app/src/main/java`, `data`, `ui`, etc., if applicable. For now, I’ve left this section as a placeholder since no details were provided.)*
+┣ 📂common \
+┃ ┣ 📜Constants.kt \
+┃ ┗ 📜Extensions.kt \
+┣ 📂data \
+┃ ┣ 📂battery \
+┃ ┃ ┗ 📜BatteryMonitor.kt \
+┃ ┣ 📂connectivity \
+┃ ┃ ┗ 📜NetworkMonitor.kt \
+┃ ┗ 📂models \
+┃ ┃ ┣ 📜BatteryStatus.kt \
+┃ ┃ ┣ 📜MonitoringState.kt \
+┃ ┃ ┗ 📜NetworkStatus.kt \
+┣ 📂di \
+┃ ┗ 📜appModules.kt \
+┣ 📂domain \
+┃ ┗ 📂repository \
+┃ ┃ ┣ 📜StatusRepository.kt \
+┃ ┃ ┗ 📜StatusRepositoryImpl.kt \
+┣ 📂ui \
+┃ ┣ 📂events \
+┃ ┃ ┗ 📜UiEvent.kt \
+┃ ┣ 📂main \
+┃ ┃ ┣ 📜MainScreen.kt \
+┃ ┃ ┗ 📜MainViewModel.kt \
+┃ ┣ 📂theme \
+┃ ┃ ┣ 📜Color.kt \
+┃ ┃ ┣ 📜Theme.kt \
+┃ ┃ ┗ 📜Type.kt \
+┣ 📂utils \
+┃ ┗ 📜NotificationHelper.kt \
+┣ 📜MainActivity.kt \
+┗ 📜MonitorApp.kt
 
 ---
 
