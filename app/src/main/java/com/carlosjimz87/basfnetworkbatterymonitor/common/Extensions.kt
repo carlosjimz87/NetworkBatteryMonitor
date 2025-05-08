@@ -1,10 +1,17 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.common
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.SnackbarHostState
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkType
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -22,9 +29,13 @@ fun MonitoringState.internetAvailability(): String {
 
 }
 
-fun currentTime(): String {
-    val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    return format.format(Date())
+@RequiresApi(Build.VERSION_CODES.O)
+fun currentTime() = flow {
+    val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+    while (true) {
+        emit(LocalDateTime.now().format(formatter))
+        delay(1000L) // Update every second
+    }
 }
 
 /**

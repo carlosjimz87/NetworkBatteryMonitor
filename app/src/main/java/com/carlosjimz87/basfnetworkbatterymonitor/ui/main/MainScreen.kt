@@ -1,6 +1,8 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.ui.main
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -13,19 +15,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.carlosjimz87.basfnetworkbatterymonitor.common.currentTime
 import com.carlosjimz87.basfnetworkbatterymonitor.common.internetAvailability
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun MainScreen(
@@ -43,12 +44,9 @@ fun MainScreen(
         targetValue = if (state.battery.isLow) Color(0xFFFFA000) else Color(0xFF1976D2),
         label = "BatteryColor"
     )
-
-    // Track last refresh time whenever state changes
-    val time = remember { mutableStateOf(currentTime()) }
-    LaunchedEffect(state) {
-        time.value = currentTime()
-    }
+    val time = currentTime().collectAsStateWithLifecycle(
+        initialValue = ""
+    )
 
     BoxWithConstraints(
         modifier = modifier
