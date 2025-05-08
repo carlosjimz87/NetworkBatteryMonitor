@@ -1,10 +1,18 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.data.connectivity
 
+
 import android.Manifest.permission.ACCESS_NETWORK_STATE
+import android.content.Context
+import android.database.ContentObserver
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings.Global.AIRPLANE_MODE_ON
+import android.provider.Settings.Global.getInt
+import android.provider.Settings.Global.getUriFor
+import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkStatus
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.NetworkType
@@ -12,15 +20,19 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
+class NetworkMonitor(
+    private val context: Context,
+    private val connectivityManager: ConnectivityManager
+) {
 
-class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
-    @Volatile
     private var lastStatus: NetworkStatus? = null
 
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    val networkStatusFlow: Flow<NetworkStatus> = callbackFlow  {
-        val callback = object : ConnectivityManager.NetworkCallback() {
+    val networkStatusFlow: Flow<NetworkStatus> = callbackFlow {
+
+        val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 updateStatus()
             }
@@ -41,15 +53,24 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
             }
         }
 
-        // Build a request that listens only for networks with internet capability
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
+        // ContentObserver for airplane mode changes
+        val airplaneModeObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                updateStatus()
+            }
+        }
 
-        // Register the network callback to start receiving updates
-        connectivityManager.registerNetworkCallback(request, callback)
+        // Register network callback
+        connectivityManager.registerDefaultNetworkCallback(networkCallback)
 
-        // Emit initial status immediately if it's different from the last emitted one
+        // Register ContentObserver for airplane mode
+        context.contentResolver.registerContentObserver(
+            getUriFor(AIRPLANE_MODE_ON),
+            false,
+            airplaneModeObserver
+        )
+
+        // Initial status
         getNetworkDetails()
             .takeIf { it != lastStatus }
             ?.let {
@@ -57,28 +78,42 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
                 lastStatus = it
             }
 
-        // Clean up callback when the flow is closed
         awaitClose {
-            connectivityManager.unregisterNetworkCallback(callback)
+            connectivityManager.unregisterNetworkCallback(networkCallback)
+            context.contentResolver.unregisterContentObserver(airplaneModeObserver)
         }
-    }
+    }.distinctUntilChanged()
 
-    // Helper to update the flow only when the network status changes
     private fun ProducerScope<NetworkStatus>.updateStatus() {
         getNetworkDetails()
-            .takeIf { it != lastStatus }
+            .takeIf { it != lastStatus } // Avoid sending the same status
             ?.let {
                 trySend(it)
                 lastStatus = it
             }
     }
 
-
-    // Retrieves the current network details (type, connectivity, internet access)
     private fun getNetworkDetails(): NetworkStatus {
+        // Check airplane mode status
+        val isAirplaneModeOn = getInt(
+            context.contentResolver,
+            AIRPLANE_MODE_ON,
+            0) != 0
+
+        // If airplane mode is on, return OFFLINE status
+        if (isAirplaneModeOn) {
+            Log.d("NetworkMonitor", "AirplaneMode ON")
+            return NetworkStatus(
+                connected = false,
+                type = NetworkType.OFFLINE,
+                hasInternet = false
+            )
+        }
+
+        // Otherwise, check network details
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
-        val connection = capabilities != null
+        val isConnected = capabilities != null
         val hasInternet = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
 
         val type = when {
@@ -86,9 +121,11 @@ class NetworkMonitor(private val connectivityManager: ConnectivityManager) {
             capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> NetworkType.CELLULAR
             capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true -> NetworkType.ETHERNET
             capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true -> NetworkType.VPN
-            else -> NetworkType.OFFLINE // there are more types but we will consider it offline for this demo
+            else -> NetworkType.OFFLINE
         }
 
-        return NetworkStatus(connected = connection, type = type, hasInternet = hasInternet)
+        val result = NetworkStatus(connected = isConnected, type = type, hasInternet = hasInternet)
+        Log.d("NetworkMonitor", "Network on: $result")
+        return result
     }
 }

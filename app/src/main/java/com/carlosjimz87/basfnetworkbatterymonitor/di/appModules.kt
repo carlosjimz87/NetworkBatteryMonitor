@@ -1,4 +1,5 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.di
+
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.lifecycle.SavedStateHandle
@@ -17,7 +18,7 @@ val appModules = module {
     single { androidContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager }
 
     // Monitors
-    single { NetworkMonitor(get()) }
+    single { NetworkMonitor(androidContext(), get()) }
     single { BatteryMonitor(androidContext()) }
 
     // Repository
