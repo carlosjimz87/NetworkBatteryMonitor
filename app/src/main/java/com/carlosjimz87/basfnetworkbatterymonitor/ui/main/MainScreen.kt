@@ -1,5 +1,6 @@
 package com.carlosjimz87.basfnetworkbatterymonitor.ui.main
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import com.carlosjimz87.basfnetworkbatterymonitor.common.currentTime
 import com.carlosjimz87.basfnetworkbatterymonitor.common.internetAvailability
 import com.carlosjimz87.basfnetworkbatterymonitor.data.models.MonitoringState
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
@@ -55,8 +57,10 @@ fun MainScreen(
         contentAlignment = Alignment.Center
     ) {
         val isCompact = maxWidth < 360.dp
+        val dynamicPadding = if (maxWidth < 400.dp) 16.dp else 24.dp // Example of using constraints
 
         Column(
+            modifier = Modifier.padding(dynamicPadding),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -78,7 +82,6 @@ fun MainScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            // Show warning only if battery is low
             AnimatedVisibility(visible = state.battery.isLow) {
                 Text(
                     "⚠️ Battery is low!",
