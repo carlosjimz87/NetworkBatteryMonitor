@@ -146,5 +146,4 @@ This app was developed as an educational project and welcomes contributions! Fee
 
 ## 📜 License
 
-This project was developed as part of a technical interview process and is intended for evaluation purposes only.
-It is not licensed for public reuse or redistribution
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
